@@ -21,6 +21,12 @@ const packageSchema = mongoose.Schema({
             required: true
         },
 
+        packageType:{
+            type: String,
+            enum: ["A4 Envelope", "One or two books", "Shoe box", "Moving box"],
+            required: true
+        },
+
         isFragile: {
             type: Boolean,
             required: false,
@@ -34,9 +40,9 @@ const packageSchema = mongoose.Schema({
         },
 
 
-        status:{ // PENDING || ACCEPTED || OUT_FOR_DEL || DELIVERED
+        status:{ // PENDING, ACCEPTED, OUT_FOR_DEL, DELIVERED
             type: String,
-            enum: "PENDING" || "ACCEPTED" || "OUT_FOR_DEL" || "DELIVERED" || "CANCELLED",
+            enum: ["PENDING", "ACCEPTED", "OUT_FOR_DEL", "DELIVERED", "CANCELLED"],
             default: "PENDING"
         },
 
@@ -46,11 +52,13 @@ const packageSchema = mongoose.Schema({
         },
 
         pickLoc: {
-            type: mongoose.Schema.ObjectId
+            type: mongoose.Schema.ObjectId,
+            required: true
         },
 
         dropLoc: {
-            type: mongoose.Schema.ObjectId
+            type: mongoose.Schema.ObjectId,
+            required: true
         },
 
         shippingPrice: {
@@ -78,12 +86,21 @@ const packageSchema = mongoose.Schema({
             type: Date
         },
 
+        assignedAt:{
+            type: Date
+        },
+
         deliveredAt: {
             type: Date
         },
 
         rating: {
             type: Number,
+            required: false
+        },
+        
+        photoURL: {
+            type: String,
             required: false
         }
 

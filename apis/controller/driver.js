@@ -54,19 +54,21 @@ exports.salary = async (req, res) =>{
         let month = obj.getMonth() + 1;  
         let salary = 0
         if (period === "total"){
-            for (let i = 0; i<packages.length; i++)
-                salary+=packages[i].shippingPrice; 
+            for (let i = 0; i<packages.length; i++){
+                if (packages[i].status == "DELIVERED")
+                    salary+=packages[i].shippingPrice; 
+            }
         }
         else if (period === "month"){
             for (let i = 0; i<packages.length; i++){
-                if (packages[i].createdAt.getMonth()+1 == month && packages[i].status == "DELIVERED")
+                if (packages[i].status == "DELIVERED" && packages[i].deliveredAt.getMonth()+1 == month)
                     salary+= packages[i].shippingPrice
             }
         }
 
         else if (period == "day"){
             for (let i = 0; i<packages.length; i++){
-                if (packages[i].createdAt.getDate() == day && packages[i].status == "DELIVERED")
+                if (packages[i].status == "DELIVERED" && packages[i].deliveredAt.getDate() == day )
                     salary+= packages[i].shippingPrice
             }
 
@@ -80,6 +82,7 @@ exports.salary = async (req, res) =>{
 
         
     } catch (error) {
-        return res.status(error.code).json({"message": error.message});
+        return res.status(400).json({"message": error.message});
     }
 }
+

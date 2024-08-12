@@ -29,7 +29,7 @@ exports.SignUp = async(req, res) =>{
         
 
     }  catch(err){
-        res.status(err.code).json({"message": err.message});
+        res.status(400).json({"message": err.message});
     }
     
 };
@@ -108,16 +108,16 @@ exports.google_facebook = async (req, res) =>{
 
 
     try{
-        google_or_facebook_id = req.body.ID;
-        const user = await User.findOne({$or: [
-            { facebookID:  google_or_facebook_id},
-            { googleID: google_or_facebook_id }
-        ]})
+        googleID = req.body.ID;
+        const user = await User.findOne(
+            { googleID:  googleID}
+        
+        )
 
         let token = null
-        const img_url = user.imgURL
-
+       
         if (user){
+            const img_url = user.imgURL
             token = jwt.sign({
                 id: user._id,
                 exp: Math.floor(Date.now() / 1000) + 86400
@@ -127,29 +127,25 @@ exports.google_facebook = async (req, res) =>{
         else{
             const ID = req.body.ID
             const img_url = req.body.imgURL
-            const signType = req.body.signType //Facebook or google?
             const given_name = req.body.firstName
-            const family_name = req.body.surName
+            const family_name = req.body.lastName
             const email = req.body.email 
-            let user = null
-            if (signType === "google"){
-                user = {
-                    "email": email,
-                    "firstName": given_name,
-                    "surName": family_name,
-                    "googleID": ID
-                }
+            const phoneNO = req.body.phoneNO
+            const gender = req.body.gender
+            
+            let user = {
+                "email": email,
+                "firstName": given_name,
+                "lastName": family_name,
+                "googleID": ID,
+                "imgURL": img_url,
+                "phoneNO": phoneNO,
+                "gender": gender,
             }
-            else{
-                user = {
-                    "email": email,
-                    "firstName": given_name,
-                    "surName": family_name,
-                    "facebookID": ID
-                }
-            }
-        
-        const _user = await User.create(user);
+            
+           
+      
+        const _ = await User.create(user);
         token = jwt.sign({
             id: user._id,
             exp: Math.floor(Date.now() / 1000) + 86400
@@ -160,7 +156,7 @@ exports.google_facebook = async (req, res) =>{
         }
 }
 catch(err){
-    res.status(err.statusCode).json({"message": err.message});
+    res.status(400).json({"message": err.message});
 }
 
 };

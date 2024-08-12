@@ -4,6 +4,7 @@ const app = express();
 const mongoose = require("mongoose")
 const userRoutes = require("./apis/routes/user")
 const driverRoutes = require("./apis/routes/driver")
+const adminRoutes = require("./apis/routes/admin")
 app.use(express.json());
 require("dotenv").config();
 
@@ -15,6 +16,7 @@ require("dotenv").config();
 
 app.use("/user", userRoutes);
 app.use("/driver", driverRoutes);
+app.use("/admin", adminRoutes)
 
 
 

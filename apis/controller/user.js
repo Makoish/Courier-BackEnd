@@ -31,7 +31,6 @@ exports.changePassword = async(req, res) =>{
         const _id = req.body.id
         let password = req.body.password
         let user = await User.findById(_id);
-        console.log(user)
         if (!user)
             throw new AppError("User doesn't exist", 404)
 
@@ -84,10 +83,11 @@ exports.orders = async (req, res) => {
         let offset = 1000
         
         
-        if (req.query.start != undefined && req.query.offset !=undefined){
+        if (req.query.start != undefined)
             start = req.query.start
+        if (req.query.offset != undefined)
             offset = req.query.offset
-        }
+        
         const orders = await Order.find({"sender": ID}).sort({createdAt: -1})
         let paginatedOrders = orders.slice(start, start+offset);
         return res.status(200).json({"orders": paginatedOrders})
@@ -110,8 +110,10 @@ exports.order = async (req, res) => {
         const dropID = order.dropLoc
         const pickID = order.pickLoc
         const user = await User.findById(order.sender)
+     
         for (let i = 0; i<user.pickLocations.length; i++){
             if (user.pickLocations[i]._id.equals(pickID)){  
+                   
                    orderClone.pickLoc = user.pickLocations[i]
                    break; 
                 }
@@ -133,12 +135,13 @@ exports.order = async (req, res) => {
 
 exports.createOrder = async (req, res) =>{
     try {
-
-        const order = await Package.create(req.body)
+        let package = req.body
+        package.sender = res.locals.id
+        const order = await Package.create(package)
         return res.status(200).json({"message": "order created","id": order._id })
 
     } catch (err) {
-        return res.status(err.code).json(err.message)
+        return res.status(400).json(err.message)
         
     }
 }
@@ -157,7 +160,7 @@ exports.editOrder = async(req, res) =>{
 
     } catch (err) {
         
-        return res.status(err.code).json(err.message)
+        return res.status(400).json({"message" :err.message})
         
     }
 
@@ -220,8 +223,10 @@ exports.getLocation = async (req, res) => {
                 return res.status(200).json(user.dropLocations[i])
             
         }
+    
+    throw new AppError("location doesn't exist", 400)
     } catch (err) {
-        return res.status(err.code).json(err.message)
+        return res.status(400).json({"message": err.message})
         
      
     }
@@ -259,6 +264,8 @@ exports.getDriverLocation = async (req, res) =>{
         return res.status(err.code).json({"message": err.message})
     }
 }
+
+
 
 exports.rateOrder = async (req, res) => {
     try {
