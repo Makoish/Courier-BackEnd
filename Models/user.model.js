@@ -82,7 +82,9 @@ const UserSchema = mongoose.Schema(
                       buildingNO: { type: Number, required: true },
                       floorNO: { type: Number, required: false},
                       flatNO: { type: Number, required: false},
-                      description: {type: String, required: true } } ],
+                      description: {type: String, required: true,
+                      city : {type: String, required: true}
+                       } } ],
             required: false
         },
 

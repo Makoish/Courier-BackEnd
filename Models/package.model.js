@@ -6,13 +6,13 @@ const packageSchema = mongoose.Schema({
 
         sender: {
             type: mongoose.Schema.ObjectId,
-            ref: "user",
+            ref: "User",
             required: true
         },
 
         courier: {
             type: mongoose.Schema.ObjectId,
-            ref: "user",
+            ref: "User",
             required: false
         },
 

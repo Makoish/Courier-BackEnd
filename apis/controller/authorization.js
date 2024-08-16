@@ -7,30 +7,36 @@ require('dotenv').config()
 const AppError = require("../utils/AppError.js");
 const { jwtDecode } = require("jwt-decode");
 const path = require("path");
+const uploadImg = require("../utils/umploadImg.js")
+
 
 var fs = require('fs');
 var Verifytemplate = fs.readFileSync(path.join(process.cwd(), './apis/htmls/userVerified.html'), { encoding: 'utf-8' });
 var CantVerifytemplate = fs.readFileSync(path.join(process.cwd(), './apis/htmls/cantVerify.html'), { encoding: 'utf-8' });
 
 exports.SignUp = async(req, res) =>{
-    try{
-    
-    
+   
+    let urls = null;    
+    if(req.files) urls = await uploadImg(req.files);
     req.body.password = await bcrypt.hash(req.body.password, 10);
     const exist = await User.find({"email": req.body.email});
-    console.log(exist)
+    
+
+    console.log(exists)
     if (exist.length > 0)          
         {  throw new AppError("user does already exist", 409);  };
     
     const user = await User.create(req.body, verified = false);
+    if (urls){
+        user.photoURL = urls[0]
+        await user.save()
+    }
     const ID = user._id;
     await sendVerificationEmail(ID, req.body.email, req.body.firstName, req.body.surName);
     res.status(200).json({message: "Email was sucessfuly sent"});
         
 
-    }  catch(err){
-        res.status(400).json({"message": err.message});
-    }
+    
     
 };
 

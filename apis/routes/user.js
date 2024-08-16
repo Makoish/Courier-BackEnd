@@ -6,11 +6,23 @@ const check_auth = require("../middlewares/checkAuth")
 
 
 
+const multer = require("multer");
+const storage = multer.diskStorage({
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1024 * 1024 * 3 }
+});
+
+
 
 
 
 // SIGN UP
-router.post("/signup", AuthController.SignUp);
+router.post("/signup", upload.array("image"), AuthController.SignUp);
 router.get("/verify", AuthController.Verify);
 router.post("/login", AuthController.Login);
 router.post("/google", AuthController.google_facebook);

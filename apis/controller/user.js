@@ -48,13 +48,10 @@ catch(err) { return res.status(400).json({ message: err.message }); }
 
 exports.homePage = async (req, res) =>{
     try{
+        
         const ID = res.locals.id
-        const user = await User.findById(ID)
-        let retUser = {};
-        retUser.name = user.firstName + user.lastName
-        retUser.gender = user.gender
-        retUser.photoURL = user.photoURL
-        return res.status(200).json(retUser)
+        const user = await User.findById(ID).select("firstName lastName gender photoURL")
+        return res.status(200).json(user)
     }
     catch(err){
         return res.status(err.code).json(err.message);
@@ -66,13 +63,26 @@ exports.homePage = async (req, res) =>{
 exports.homeOrders = async (req, res) => {
     try {
         const ID = res.locals.id
-        const orders = await Order.find({"sender" : ID}).sort({createdAt: -1}).limit(2)
-        return res.status(200).json({"orders": orders})
+        const orders = await Order.find({"sender" : ID}).populate("sender").select("packageName packageType rating pickLoc dropLoc").sort({createdAt: -1}).limit(2)
+        const ordersClone = orders.map(order => {
+            const orderObject = order.toObject();
+            return orderObject;
+          });
+
+        for (let i = 0; i<ordersClone.length; i++){
+            ordersClone[i].pick = ordersClone[i].sender.pickLocations.find(loc => loc._id.equals(orders[i].pickLoc)).city
+            ordersClone[i].drop = ordersClone[i].sender.dropLocations.find(loc => loc._id.equals(orders[i].dropLoc)).city
+            delete ordersClone[i].sender
+            delete ordersClone[i].dropLoc
+            delete ordersClone[i].pickLoc
+        }
+        return res.status(200).json({"orders": ordersClone})
 
         
     } catch (err) {
-        return res.status(err.code).json(err.message);
+        return res.status(400).json(err.message);
     }
+
 }
 
 
@@ -82,17 +92,28 @@ exports.orders = async (req, res) => {
         let start = 0
         let offset = 1000
         
-        
         if (req.query.start != undefined)
             start = req.query.start
         if (req.query.offset != undefined)
             offset = req.query.offset
         
-        const orders = await Order.find({"sender": ID}).sort({createdAt: -1})
-        let paginatedOrders = orders.slice(start, start+offset);
+        const orders = await Order.find({"sender": ID}).select("packageName packageType status rating sender pickLoc dropLoc").populate("sender").sort({createdAt: -1})
+        const ordersClone = orders.map(order => {
+            const orderObject = order.toObject();
+            return orderObject;
+          });
+
+        for (let i = 0; i<ordersClone.length; i++){
+            ordersClone[i].pick = ordersClone[i].sender.pickLocations.find(loc => loc._id.equals(orders[i].pickLoc)).city
+            ordersClone[i].drop = ordersClone[i].sender.dropLocations.find(loc => loc._id.equals(orders[i].dropLoc)).city
+            delete ordersClone[i].sender
+            delete ordersClone[i].dropLoc
+            delete ordersClone[i].pickLoc
+        }
+        let paginatedOrders = ordersClone.slice(start, start+offset);
         return res.status(200).json({"orders": paginatedOrders})
     } catch (err) {
-        return res.status(err.code).json(err.message)
+        return res.status(400).json(err.message)
         
     }
 }
@@ -101,30 +122,19 @@ exports.orders = async (req, res) => {
 exports.order = async (req, res) => {
     try {
         const ID = req.params.id
-        const order = await Order.findById(ID)
-        const plainObject = order.toObject({ virtuals: false, getters: true });
-        let orderClone = {...plainObject}
+        const order = await Order.findById(ID).populate("sender").select("-__v -createdAt -updatedAt")
+        const orderClone = order.toObject();
         
         
+    
         
-        const dropID = order.dropLoc
-        const pickID = order.pickLoc
-        const user = await User.findById(order.sender)
-     
-        for (let i = 0; i<user.pickLocations.length; i++){
-            if (user.pickLocations[i]._id.equals(pickID)){  
-                   
-                   orderClone.pickLoc = user.pickLocations[i]
-                   break; 
-                }
-        }
-
-        for (let i = 0; i<user.dropLocations.length; i++){
-            if (user.dropLocations[i]._id.equals(dropID)){
-                  orderClone.dropLoc = user.dropLocations[i]; 
-                  break; 
-                }
-        }
+        
+        orderClone.pick = orderClone.sender.pickLocations.find(loc => loc._id.equals(orderClone.pickLoc))
+        orderClone.drop = orderClone.sender.dropLocations.find(loc => loc._id.equals(orderClone.dropLoc))
+        delete orderClone.sender
+        delete orderClone.dropLoc
+        delete orderClone.pickLoc
+        
         return res.status(200).json(orderClone)
     } catch (err) {
         return res.status(400).json(err.message)
@@ -185,23 +195,23 @@ exports.addLocation = async (req, res) =>{
 }
 
 
-exports.removeLocation = async (req, res) =>{
-    try {
-        const _id = res.locals.id
-        const loc_id = req.params.id
-        if (req.body.type === "drop")
-            await User.findByIdAndUpdate(_id, {$pull: {dropLocations: {_id: loc_id}}})
+// exports.removeLocation = async (req, res) =>{
+//     try {
+//         const _id = res.locals.id
+//         const loc_id = req.params.id
+//         if (req.body.type === "drop")
+//             await User.findByIdAndUpdate(_id, {$pull: {dropLocations: {_id: loc_id}}})
         
-        else
-            await User.findByIdAndUpdate(_id, {$pull: {pickLocations: {_id: loc_id}}})
+//         else
+//             await User.findByIdAndUpdate(_id, {$pull: {pickLocations: {_id: loc_id}}})
 
 
-        return res.status(200).json({"message": "Removed location"})
+//         return res.status(200).json({"message": "Removed location"})
         
-    } catch (err) {
-        return res.status(err.code).json(err.message)
-    }
-}
+//     } catch (err) {
+//         return res.status(err.code).json(err.message)
+//     }
+// }
 
 
 exports.getLocation = async (req, res) => {

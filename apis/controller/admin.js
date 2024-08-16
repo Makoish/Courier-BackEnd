@@ -104,28 +104,63 @@ exports.changeOrder = async (req, res) => {
 
 
 exports.orders = async (req, res) => {
-try {
-    let status = "PENDING"
-    let start = 0
-    let offset = 1000000
-
-    const packages = await Package.find({"status" : status}).sort({createdAt: -1})
-    console.log(packages)
-
-    if (req.query.start != undefined)
-        start = req.query.start
-    if (req.query.offset != undefined)
-        offset = req.query.offset
-    if (req.query.status != undefined)
-        status = req.query.status
-    let paginatedOrders = packages.slice(start, start+offset)
-    return res.status(200).json({"orders": paginatedOrders});
+    try {
+        const ID = req.params.id
+        const order = await Package.findById(ID).populate("sender").select("-__v -createdAt -updatedAt")
+        const orderClone = order.toObject();
+        
+        
     
+        
+        
+        orderClone.pick = orderClone.sender.pickLocations.find(loc => loc._id.equals(orderClone.pickLoc))
+        orderClone.drop = orderClone.sender.dropLocations.find(loc => loc._id.equals(orderClone.dropLoc))
+        delete orderClone.sender
+        delete orderClone.dropLoc
+        delete orderClone.pickLoc
+        
+        return res.status(200).json(orderClone)
+    } catch (err) {
+        return res.status(400).json(err.message)
+        
+    }
 
-} catch (error) {
-    return res.status(400).json({"message": error.message})
-    
 }
+
+
+exports.orders = async (req, res) => {
+    try {
+        
+        let status = "PENDING"
+        let start = 0
+        let offset = 1000
+        
+        if (req.query.start != undefined)
+            start = req.query.start
+        if (req.query.offset != undefined)
+            offset = req.query.offset
+        if (req.query.status != undefined)
+            status = req.query.status
+        
+        const orders = await Package.find({"status": status}).select("packageName packageType status rating sender pickLoc dropLoc").populate("sender").sort({createdAt: -1})
+        const ordersClone = orders.map(order => {
+            const orderObject = order.toObject();
+            return orderObject;
+          });
+
+        for (let i = 0; i<ordersClone.length; i++){
+            ordersClone[i].pick = ordersClone[i].sender.pickLocations.find(loc => loc._id.equals(orders[i].pickLoc)).city
+            ordersClone[i].drop = ordersClone[i].sender.dropLocations.find(loc => loc._id.equals(orders[i].dropLoc)).city
+            delete ordersClone[i].sender
+            delete ordersClone[i].dropLoc
+            delete ordersClone[i].pickLoc
+        }
+        let paginatedOrders = ordersClone.slice(start, start+offset);
+        return res.status(200).json({"orders": paginatedOrders})
+    } catch (err) {
+        return res.status(400).json(err.message)
+        
+    }
 };
 
 
@@ -155,14 +190,14 @@ exports.users = async (req, res) => {
 
         let users = []
         if (type === "user")
-            users = await User.find({$and : [{"isAdmin": {$ne: true}}, {"isCourier": {$ne: true}}]}).sort({createdAt: -1})
+            users = await User.find({$and : [{"isAdmin": {$ne: true}}, {"isCourier": {$ne: true}}]}).select("-__v -password -createAt -updateAt -dropLocations -pickLocations").sort({createdAt: -1})
         else if (type === "admin")
-            users = await User.find({"isAdmin": true}).sort({createdAt: -1})
+            users = await User.find({"isAdmin": true}).select("-__v -password -createAt -updateAt -dropLocations -pickLocations").sort({createdAt: -1})
         else
-            users = await User.find({"isCourier": true}).sort({createdAt: -1})
+            users = await User.find({"isCourier": true}).select("-__v -password -createAt -updateAt -dropLocations -pickLocations -driverLocation").sort({createdAt: -1})
 
 
-        return res.status(200).json({"message": users})
+        return res.status(200).json({"Users": users})
         
         
     } catch (error) {
