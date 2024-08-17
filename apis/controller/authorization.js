@@ -21,8 +21,6 @@ exports.SignUp = async(req, res) =>{
     req.body.password = await bcrypt.hash(req.body.password, 10);
     const exist = await User.find({"email": req.body.email});
     
-
-    console.log(exists)
     if (exist.length > 0)          
         {  throw new AppError("user does already exist", 409);  };
     
@@ -57,7 +55,6 @@ exports.Verify = async (req, res) => {
             throw new AppError("user doesn't exist", 404);
 
 
-        console.log("here")
         user = await User.findByIdAndUpdate(decoded.id, {"isVerified": true});
 
         const modifiedHtml = Verifytemplate.replace('__REDIRECT_URL__', process.env.URL);

@@ -36,7 +36,7 @@ module.exports = async (_id, recipientEmail, firstName, surName) => {
         html: ejs.render(template, {
           // name: `${firstName.slice(0,1).toUpperCase()}``${firstName.slice(1).toLowerCase()}` `${surName.slice(0,1).toUpperCase()}``${surName.slice(1).toLowerCase()}`,
           name: `${firstName} ${surName}`,
-          verificationLink: process.env.URL +"/user/verify/?token="+ token
+          verificationLink: process.env.URL + "/user/verify/?token="+ token
     }),
         
     }
