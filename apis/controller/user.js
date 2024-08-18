@@ -195,23 +195,6 @@ exports.addLocation = async (req, res) =>{
 }
 
 
-// exports.removeLocation = async (req, res) =>{
-//     try {
-//         const _id = res.locals.id
-//         const loc_id = req.params.id
-//         if (req.body.type === "drop")
-//             await User.findByIdAndUpdate(_id, {$pull: {dropLocations: {_id: loc_id}}})
-        
-//         else
-//             await User.findByIdAndUpdate(_id, {$pull: {pickLocations: {_id: loc_id}}})
-
-
-//         return res.status(200).json({"message": "Removed location"})
-        
-//     } catch (err) {
-//         return res.status(err.code).json(err.message)
-//     }
-// }
 
 
 exports.getLocation = async (req, res) => {
@@ -267,7 +250,7 @@ exports.getDriverLocation = async (req, res) =>{
     try {
         const packageID = req.params.packageID
         const package = await Package.findById(packageID)
-        const courierID = package.courier._id
+        const courierID = package.courier
         const user = await User.findById(courierID)
         return res.status(200).json({"location": user.driverLocation})
     } catch (err) {
